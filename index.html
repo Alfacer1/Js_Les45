@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post and Comments</title>
+</head>
+<body>
+
+  <label for="postIdInput">Enter Post ID (1-100): </label>
+  <input type="number" id="postIdInput" min="1" max="100">
+  <button id="getPostButton">GET POST</button>
+
+  <div id="postContainer"></div>
+  <div id="commentsContainer"></div>
+
+  <script>
+    const request = (url) => {
+      return fetch(url)
+        .then(response => response.json())
+        .catch(e => console.log(e));
+    }
+
+    const getPostById = (postId) => request(`https://jsonplaceholder.typicode.com/posts/${postId}`);
+    const getCommentsByPostId = (postId) => request(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`);
+
+    const createHTMLElement = (tag, text) => {
+      const element = document.createElement(tag);
+      element.innerText = text;
+      return element;
+    };
+
+    const displayPost = async (postId) => {
+      try {
+        const post = await getPostById(postId);
+
+        if (!post.id) {
+          console.log('No post found');
+          return;
+        }
+
+        const postContainer = document.getElementById('postContainer');
+
+        postContainer.innerHTML = '';
+
+        const h1 = createHTMLElement('h1', post.title);
+        const p = createHTMLElement('p', post.body);
+
+        const getCommentsButton = document.createElement('button');
+        getCommentsButton.innerText = 'GET COMMENTS';
+        getCommentsButton.addEventListener('click', async () => {
+          try {
+            const comments = await getCommentsByPostId(postId);
+            displayComments(comments);
+          } catch (error) {
+            console.error('Error fetching comments:', error);
+          }
+        });
+
+        postContainer.appendChild(h1);
+        postContainer.appendChild(p);
+        postContainer.appendChild(getCommentsButton);
+      } catch (error) {
+        console.error('Error fetching post:', error);
+      }
+    };
+
+    const displayComments = (comments) => {
+      const commentsContainer = document.getElementById('commentsContainer');
+      if (!commentsContainer) {
+        const container = createHTMLElement('div', '');
+        container.id = 'commentsContainer';
+        document.body.appendChild(container);
+      }
+
+      commentsContainer.innerHTML = '';
+
+      comments.forEach(comment => {
+        const commentElement = createHTMLElement('p', comment.body);
+        commentsContainer.appendChild(commentElement);
+      });
+    };
+
+    const getPostButton = document.getElementById('getPostButton');
+
+    getPostButton.addEventListener('click', () => {
+      const postIdInput = document.getElementById('postIdInput');
+      const postId = parseInt(postIdInput.value);
+
+      if (isNaN(postId) || postId < 1 || postId > 100) {
+        alert('Please enter a valid Post ID between 1 and 100.');
+        return;
+      }
+      
+      displayPost(postId);
+    });
+  </script>
+
+</body>
+</html>
